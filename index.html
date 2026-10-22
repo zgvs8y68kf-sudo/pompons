@@ -594,7 +594,8 @@ function renderSheet(){
         <input class="input" id="kName" maxlength="24" autocomplete="off" value="${esc(k2?.name || "")}" required></div>
       <div class="field"><span class="lab">Couleur</span><div class="colors">` +
       COLORS.map((v, i) => `<button type="button" class="sw" style="--c:var(${v})" data-a="kid-color" data-c="${i}" aria-pressed="${i === c}" aria-label="Couleur ${i + 1}">${i === c ? I.check : ""}</button>`).join("") +
-      `</div></div><div class="sheet-foot"><button class="btn btn-primary" type="submit">Enregistrer</button></div></form>`;
+      `</div></div><div class="sheet-foot"><button class="btn btn-primary" type="submit">Enregistrer</button>
+        ${k2 ? `<button class="btn btn-danger" type="button" data-a="kid-del">${sheet.confirm ? `Confirmer : supprimer ${esc(k2.name)} et son historique` : "Supprimer l'enfant"}</button>` : ""}</div></form>`;
   } else if (sheet.type === "routine"){
     const r = routines.find(x => x.id === sheet.id);
     const f = sheet.form;
@@ -638,6 +639,20 @@ document.addEventListener("click", async e => {
     case "kid-new": openSheet({type: "kid", id: null, color: [0,1,2,3].find(c => !kids.some(x => x.color === c)) ?? 0}); break;
     case "kid-edit": openSheet({type: "kid", id: t.dataset.id}); break;
     case "kid-color": sheet.color = +t.dataset.c; { const v = $("kName").value; renderSheet(); $("kName").value = v; } break;
+    case "kid-del": {
+      const v = $("kName").value;
+      if (!sheet.confirm){ sheet.confirm = true; renderSheet(); $("kName").value = v; break; }
+      const id = sheet.id, name = kidById(id)?.name || "";
+      const gone = Object.fromEntries(log.filter(l => l.kid === id).map(l => [l.id, null]));
+      try {
+        writeGen++;
+        if (Object.keys(gone).length) await ref("log").update(gone);
+        await ref("kids/" + id).delete();
+        kids = kids.filter(k => k.id !== id); log = log.filter(l => l.kid !== id);
+        closeSheet(); render(); toast(`${name} supprimé(e)`);
+      } catch(err){ fail(err); }
+      break;
+    }
     case "r-new": openSheet({type: "routine", id: null, form: {label: "", s: 0, b: 1, rep: false}}); break;
     case "r-edit": { const r = routines.find(x => x.id === t.dataset.id); if (!r) break; const w = rewardOf(r);
       openSheet({type: "routine", id: r.id, form: {label: r.label, s: w.s, b: w.b, rep: !!r.rep}}); break; }
