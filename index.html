@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Les Pompons</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<style>
+/* ── Tokens ──────────────────────────────────────────── */
+:root{
+  --bg:#F2EEF9;--surface:#FFFFFF;--ink:#1C1428;--muted:#7A7090;--line:#E4DCEF;
+  --k0:#F0467A;--k1:#2A9D8F;--k2:#E89B0C;--k3:#7B5CE0;
+  --soft:#EAE3F5;--ok:#1F8A5B;--danger:#C8324B;--tab-h:66px;
+  --display:"Fredoka","Baloo 2",system-ui,sans-serif;
+  --body:"Nunito Sans",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#13101C;--surface:#1E1929;--ink:#F2EEFA;--muted:#A496B8;--line:#302540;
+  --k0:#FF6E98;--k1:#4CC3B4;--k2:#FFB938;--k3:#9C84FF;
+  --soft:#251F34;--ok:#4CC38A;--danger:#FF6B82;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#13101C;--surface:#1E1929;--ink:#F2EEFA;--muted:#A496B8;--line:#302540;
+  --k0:#FF6E98;--k1:#4CC3B4;--k2:#FFB938;--k3:#9C84FF;
+  --soft:#251F34;--ok:#4CC38A;--danger:#FF6B82;color-scheme:dark}
+
+/* ── Reset / base ────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0}
+html,body{background:var(--bg);height:100%}
+body{color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;overscroll-behavior:none}
+h1,h2,.name,.big-time,.timer-num,.nav-label{font-family:var(--display)}
+
+/* ── Login overlay ───────────────────────────────────── */
+.login-overlay{
+  position:fixed;inset:0;z-index:100;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+.login-card{
+  background:var(--surface);border-radius:28px;padding:36px 28px;
+  width:100%;max-width:340px;text-align:center;
+  box-shadow:0 8px 40px -12px color-mix(in srgb,var(--k3) 18%,#0004);
+}
+.login-emoji{font-size:52px;margin-bottom:10px;line-height:1}
+.login-family{font:700 13px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.login-title{font:700 22px var(--display);color:var(--ink);line-height:1.2;margin-bottom:28px}
+.login-hint{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px}
+.pin-input{
+  font:700 36px var(--display);text-align:center;letter-spacing:10px;
+  background:var(--soft);border:2px solid transparent;border-radius:16px;
+  padding:14px 16px;width:100%;color:var(--ink);outline:none;
+  -webkit-text-security:disc;
+}
+.pin-input:focus{border-color:var(--k3)}
+.pin-err{color:var(--danger);font-weight:700;font-size:14px;margin-top:10px}
+.login-btn{width:100%;margin-top:14px;padding:16px;font-size:17px;font-family:var(--display)}
+.name-btns{display:flex;flex-direction:column;gap:12px}
+.login-name-btn{padding:18px;font-size:18px;font-family:var(--display);font-weight:700}
+
+/* ── App bar ─────────────────────────────────────────── */
+.appbar{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:max(14px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));
+  background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+h1{font-size:26px;font-weight:700;letter-spacing:-.01em}
+.rule{color:var(--muted);font-size:12px;margin-top:1px}
+.rule b{color:var(--ink);font-weight:700}
+.sync{
+  font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:5px;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;flex-shrink:0}
+.sync.on i{background:var(--ok)}
+
+/* ── Notices ─────────────────────────────────────────── */
+.notice{background:var(--soft);border-radius:14px;padding:12px 14px;font-size:14px;color:var(--ink)}
+#notice{margin:0 max(16px,env(safe-area-inset-left,0px)) 0}
+
+/* ── Main / panels ───────────────────────────────────── */
+main{padding:12px max(16px,env(safe-area-inset-right,0px))
+  calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 20px)
+  max(16px,env(safe-area-inset-left,0px))}
+.wrap{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+
+/* ── Tab bar ─────────────────────────────────────────── */
+.tabbar{
+  position:fixed;bottom:0;left:0;right:0;z-index:10;display:flex;
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  height:calc(var(--tab-h) + env(safe-area-inset-bottom,0px));
+}
+.nav-btn{
+  flex:1;border:0;background:none;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  padding:8px 4px;color:var(--muted);transition:color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.nav-btn[aria-selected="true"]{color:var(--k3)}
+.nav-ic{font-size:22px;line-height:1;display:block;transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
+.nav-btn[aria-selected="true"] .nav-ic{transform:scale(1.12)}
+.nav-label{font-size:11px;font-weight:700;letter-spacing:.03em}
+
+/* ── Kids ────────────────────────────────────────────── */
+.kids{display:flex;flex-direction:column;gap:16px}
+.kid{
+  --c:var(--k0);background:var(--surface);border-radius:24px;overflow:hidden;
+  box-shadow:0 2px 0 var(--line),0 12px 36px -16px color-mix(in srgb,var(--c) 28%,transparent);
+}
+.kid-hero{
+  padding:18px 18px 14px;
+  background:linear-gradient(140deg,color-mix(in srgb,var(--c) 12%,var(--surface)) 0%,var(--surface) 65%);
+  border-bottom:1px solid var(--line);
+}
+.kid-body{padding:14px 18px 18px}
+.kid-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.name{font-size:28px;font-weight:700;background:none;border:0;color:var(--ink);padding:0;cursor:pointer;
+  text-align:left;font-family:var(--display);line-height:1}
+.name:hover{text-decoration:underline dotted var(--muted)}
+.name-input{font:700 24px var(--display);color:var(--ink);background:var(--soft);border:2px solid var(--c);
+  border-radius:12px;padding:4px 10px;width:100%;max-width:220px}
+.avail{text-align:right}
+.avail small,.eyebrow{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.big-time{font-size:28px;font-weight:700;color:var(--c);font-variant-numeric:tabular-nums;line-height:1.1}
+
+/* ── Pompon jar ──────────────────────────────────────── */
+.jar{display:flex;flex-direction:column;gap:8px}
+.row-label{font-size:11px;color:var(--muted);font-weight:700;display:flex;justify-content:space-between;
+  letter-spacing:.03em;text-transform:uppercase}
+.bigs{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-height:42px}
+.slots{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+.pom{
+  border-radius:50%;
+  background:radial-gradient(circle at 32% 28%,
+    color-mix(in srgb,#fff 60%,var(--c)) 0 16%,
+    var(--c) 55%,
+    color-mix(in srgb,#000 24%,var(--c)) 100%);
+  box-shadow:0 0 0 2.5px color-mix(in srgb,var(--c) 25%,transparent),
+             inset 0 1px 2px color-mix(in srgb,#fff 25%,transparent);
+}
+.pom.lg{width:40px;height:40px}
+.slot{aspect-ratio:1;max-width:100%;border-radius:50%;
+  border:2.5px dashed color-mix(in srgb,var(--c) 28%,var(--line))}
+.slot.pom{border:0}
+.none{font-size:13px;color:var(--muted)}
+.more{font:600 13px var(--display);color:var(--c);
+  background:color-mix(in srgb,var(--c) 12%,var(--surface));
+  border-radius:20px;padding:4px 10px}
+@keyframes pop{
+  0%{transform:scale(.15);opacity:0}
+  65%{transform:scale(1.22);opacity:1}
+  100%{transform:scale(1)}
+}
+.pop{animation:pop .4s cubic-bezier(.34,1.56,.64,1)}
+
+/* ── Actions ─────────────────────────────────────────── */
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{font-family:var(--body);cursor:pointer}
+.btn{border:0;border-radius:16px;padding:13px 10px;font-weight:700;font-size:14px;
+  transition:transform .08s,box-shadow .08s;color:var(--ink);-webkit-tap-highlight-color:transparent}
+.btn:active{transform:scale(.96)}
+.btn:focus-visible,.chk:focus-visible,.seg button:focus-visible{outline:3px solid var(--c,var(--k3));outline-offset:2px}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn span{display:block;font-size:11px;font-weight:600;opacity:.75;margin-top:1px}
+.add-s{background:color-mix(in srgb,var(--c) 13%,var(--surface));color:var(--ink);
+  border:2px solid color-mix(in srgb,var(--c) 45%,transparent);
+  font-family:var(--display);font-weight:600;font-size:17px}
+.add-b{background:var(--c);color:#fff;font-family:var(--display);font-weight:600;font-size:17px;
+  box-shadow:0 4px 14px -4px color-mix(in srgb,var(--c) 55%,transparent)}
+.add-b:active{box-shadow:none}
+.use{background:var(--soft)}
+.use span{color:var(--muted)}
+
+/* ── Sections ────────────────────────────────────────── */
+section h2{font-size:20px;margin:0;font-weight:600}
+.sec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--soft);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;border-radius:999px;padding:7px 14px;font-weight:700;font-size:13px;
+  color:var(--muted);transition:background .15s,color .15s}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px #0002}
+.link{background:none;border:0;color:var(--muted);font-weight:700;font-size:13px;text-decoration:underline;padding:4px;cursor:pointer}
+
+/* ── Cards ───────────────────────────────────────────── */
+.card{background:var(--surface);border-radius:20px;padding:4px 16px;box-shadow:0 1px 0 var(--line)}
+.rgrid{display:grid;align-items:center}
+.rgrid > *{padding:11px 0;border-bottom:1px solid var(--line)}
+.rgrid .last{border-bottom:0}
+.rh{font:600 14px var(--display);text-align:center;color:var(--c);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-inline:2px}
+.rl{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:14px;font-weight:600;padding-right:8px}
+.rl .lbl{min-width:0}
+.tag{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.02em}
+.cell{display:flex;justify-content:center}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.chk.rep{color:var(--muted);font:700 17px var(--display)}
+.chk.cnt{color:#fff;font:700 16px var(--display)}
+.minus{border:0;background:none;color:var(--muted);font-weight:800;font-size:12px;padding:2px 6px;cursor:pointer}
+.chk{width:44px;height:44px;border-radius:50%;
+  border:2.5px dashed color-mix(in srgb,var(--c) 35%,var(--line));
+  background:none;display:grid;place-items:center;padding:0;cursor:pointer;transition:transform .1s}
+.chk:active{transform:scale(.88)}
+.chk.on{border:0;background:radial-gradient(circle at 32% 28%,
+  color-mix(in srgb,#fff 55%,var(--c)) 0 16%,
+  var(--c) 55%,
+  color-mix(in srgb,#000 22%,var(--c)) 100%)}
+.chk.on:not(.rep)::after{content:"";width:13px;height:8px;border:3px solid #fff;border-top:0;border-right:0;transform:translateY(-2px) rotate(-45deg)}
+.chk:disabled{opacity:.35;cursor:not-allowed}
+
+/* ── Manage routines ─────────────────────────────────── */
+.manage{display:flex;flex-direction:column;gap:0}
+.mrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.mrow .lbl{flex:1;min-width:0;font-size:14px;font-weight:600}
+.mrow .lbl small{display:block;color:var(--muted);font-size:12px;font-weight:600}
+.nums{display:flex;gap:14px;flex-wrap:wrap;align-items:center;width:100%}
+.nums label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--muted)}
+.addform .nums input[type=number]{flex:none;width:64px}
+.formbtns{display:flex;gap:8px;align-items:center}
+.mini{border:0;border-radius:10px;padding:7px 12px;font-weight:700;font-size:12px;background:var(--soft);color:var(--ink);cursor:pointer}
+.mini.del{color:var(--danger)}
+.mini.del.sure{background:var(--danger);color:#fff}
+.addform{display:flex;gap:8px;padding:12px 0;flex-wrap:wrap}
+.addform input[type=text],.addform input[type=number]{flex:1 1 180px;min-width:0;font:600 14px var(--body);
+  color:var(--ink);background:var(--soft);border:2px solid transparent;border-radius:12px;padding:10px 12px}
+.addform input:focus{outline:none;border-color:var(--k3)}
+.addform .go{background:var(--ink);color:var(--bg);border:0;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer}
+
+/* ── Week / history ──────────────────────────────────── */
+.wk{display:grid;grid-template-columns:1fr auto auto;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
+.wk:last-child{border:0}
+.wk .n{font-weight:700;display:flex;align-items:center;gap:8px;min-width:0}
+.wk .dot{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+.wk .v{font-variant-numeric:tabular-nums;text-align:right;font-size:14px}
+.wk .v small{display:block;color:var(--muted);font-size:11px}
+.hist{max-height:420px;overflow-y:auto}
+.h{display:grid;grid-template-columns:auto 1fr auto;gap:10px;padding:10px 0;
+  border-bottom:1px solid var(--line);align-items:center;font-size:14px}
+.h:last-child{border-bottom:0}
+.h .ic{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
+  font-weight:800;font-size:11px;color:#fff;background:var(--c);flex-shrink:0}
+.h .ic.out{background:var(--soft);color:var(--c);border:2px solid var(--c)}
+.h .t{min-width:0}
+.h .t small{display:block;color:var(--muted);font-size:12px}
+.h .when{color:var(--muted);font-size:12px;text-align:right;white-space:nowrap}
+.empty{color:var(--muted);font-size:14px;padding:14px 0}
+.add{background:var(--surface);border:2px dashed var(--line);color:var(--muted);
+  border-radius:20px;padding:16px;font-weight:700;width:100%;cursor:pointer}
+
+/* ── Toast ───────────────────────────────────────────── */
+.toast{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 10px);
+  background:var(--ink);color:var(--bg);border-radius:16px;padding:12px 16px;
+  display:flex;gap:14px;align-items:center;font-size:14px;
+  max-width:calc(100% - 32px);z-index:20;box-shadow:0 8px 32px -8px #0007;white-space:nowrap;
+}
+.toast button{background:none;border:0;color:var(--k2);font-weight:800;font-size:14px;padding:4px;cursor:pointer}
+
+/* ── Timer overlay ───────────────────────────────────── */
+.timer{
+  position:fixed;inset:0;
+  background:color-mix(in srgb,var(--bg) 92%,transparent);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;padding:24px;
+}
+.timer::before{
+  content:"";position:absolute;width:360px;height:360px;border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--c,var(--k3)) 20%,transparent),transparent 70%);
+  pointer-events:none;
+}
+.timer-who{font:600 22px var(--display);opacity:.8;position:relative}
+.timer-num{font-size:min(28vw,140px);font-weight:700;color:var(--c,var(--k3));
+  font-variant-numeric:tabular-nums;line-height:1;position:relative;font-family:var(--display)}
+.timer.done .timer-num{animation:pop .6s cubic-bezier(.34,1.56,.64,1) infinite alternate}
+.timer .btn{min-width:180px;position:relative}
+
+@media (prefers-reduced-motion:reduce){
+  .pop,.timer.done .timer-num{animation:none}
+  .btn,.chk,.nav-ic{transition:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Login overlay -->
+<div id="login" class="login-overlay">
+  <div class="login-card">
+    <div class="login-emoji">🎀</div>
+    <div class="login-family">Famille</div>
+    <h2 class="login-title">PALCOUX<br>TESTUD</h2>
+    <div id="loginPin">
+      <p class="login-hint">Code famille</p>
+      <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4"
+        class="pin-input" placeholder="••••" autocomplete="off" aria-label="Code PIN">
+      <button id="pinGo" class="btn add-b login-btn" type="button" style="--c:var(--k3)">Entrer →</button>
+      <div id="pinErr" class="pin-err" hidden>Code incorrect</div>
+    </div>
+    <div id="loginName" hidden>
+      <p class="login-hint" style="margin-top:8px">Qui est là ?</p>
+      <div class="name-btns">
+        <button class="btn add-b login-name-btn" data-name="Papa" type="button" style="--c:var(--k3)">Papa</button>
+        <button class="btn add-s login-name-btn" data-name="Maman" type="button" style="--c:var(--k1)">Maman</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- App -->
+<header class="appbar">
+  <div>
+    <h1>Les Pompons</h1>
+    <div class="rule">Petit = <b>30 s</b> · Gros = <b>5 min</b> · 10 petits = 1 gros</div>
+  </div>
+  <div class="sync" id="sync" title="Changer d'utilisateur"><i></i><span>Connexion…</span></div>
+</header>
+
+<div class="notice" id="notice" hidden style="margin:8px max(16px,env(safe-area-inset-left,0px)) 0"></div>
+
+<main>
+  <div class="panel" data-tab="pompons">
+    <div class="wrap">
+      <div class="kids" id="kids">
+        <div class="notice">Chargement des pompons…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" data-tab="routines" hidden>
+    <div class="wrap">
+      <section>
+        <div class="sec-head">
+          <h2>Routines</h2>
+          <div class="seg" id="daySeg">
+            <button type="button" data-day="0" aria-pressed="true">Aujourd'hui</button>
+            <button type="button" data-day="1" aria-pressed="false">Hier</button>
+          </div>
+        </div>
+        <div class="card" id="routines"><div class="empty">Les routines s'afficheront ici.</div></div>
+        <div style="margin-top:8px">
+          <button class="link" id="toggleManage" type="button">Modifier les routines</button>
+        </div>
+        <div class="card" id="manage" hidden style="margin-top:8px">
+          <div id="manageList"></div>
+          <form class="addform" id="addForm">
+            <input id="newLabel" type="text" placeholder="Nouvelle routine (ex. Brosser les dents)" maxlength="80" aria-label="Nom de la routine">
+            <div class="nums">
+              <label for="newS">Petits <input id="newS" type="number" inputmode="numeric" min="0" max="20" value="1"></label>
+              <label for="newB">Gros <input id="newB" type="number" inputmode="numeric" min="0" max="10" value="0"></label>
+              <label for="newRep"><input id="newRep" type="checkbox"> Plusieurs fois</label>
+            </div>
+            <div class="formbtns">
+              <button class="go" id="formGo" type="submit">Ajouter</button>
+              <button class="mini" id="formCancel" type="button" hidden>Annuler</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="panel" data-tab="bilan" hidden>
+    <div class="wrap">
+      <section>
+        <div class="sec-head"><h2>Cette semaine</h2></div>
+        <div class="card" id="week"><div class="empty">Les pompons de la semaine s'afficheront ici.</div></div>
+      </section>
+      <section>
+        <div class="sec-head"><h2>Historique</h2></div>
+        <div class="card hist" id="hist"><div class="empty">Aucun pompon pour l'instant.</div></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <button class="nav-btn" data-tab="pompons" aria-selected="true" type="button">
+    <span class="nav-ic">🎀</span>
+    <span class="nav-label">Pompons</span>
+  </button>
+  <button class="nav-btn" data-tab="routines" aria-selected="false" type="button">
+    <span class="nav-ic">✅</span>
+    <span class="nav-label">Routines</span>
+  </button>
+  <button class="nav-btn" data-tab="bilan" aria-selected="false" type="button">
+    <span class="nav-ic">📊</span>
+    <span class="nav-label">Bilan</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast" hidden><span id="toastMsg"></span><button id="toastUndo" type="button">Annuler</button></div>
+
+<div class="timer" id="timer" hidden>
+  <div class="timer-who" id="timerWho"></div>
+  <div class="timer-num" id="timerNum">0:30</div>
+  <button class="btn add-b" id="timerStop" type="button">Arrêter</button>
+</div>
+
+<script>
+const SMALL_S = 30, BIG_S = 300, PER_BIG = 10;
+const COLORS = ["--k0","--k1","--k2","--k3"];
+const PIN = "1234";
+const BASE = "https://pompons-palcoux-testud-default-rtdb.firebaseio.com/families/palcoux-testud";
+
+let currentUser = null;
+let kids = [], log = [], routines = [], busy = new Set(), editing = null, dayOffset = 0, confirmDel = null;
+const $ = id => document.getElementById(id);
+
+/* ---------- Firebase REST DB layer ---------- */
+async function apiFetch(url, method, data){
+  const opts = {method, headers:{"Content-Type":"application/json"}};
+  if (data !== undefined) opts.body = JSON.stringify(data);
+  const r = await fetch(url, opts);
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+
+function mkRef(path){
+  const url = BASE + "/" + path + ".json";
+  return {
+    update: d => apiFetch(url, "PATCH", d),
+    set: d => apiFetch(url, "PUT", d),
+    delete: () => apiFetch(url, "DELETE"),
+  };
+}
+
+function mkNewRef(col){
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+  return {id, set: d => mkRef(col+"/"+id).set(d), delete: () => mkRef(col+"/"+id).delete()};
+}
+
+const db = {
+  doc: path => mkRef(path),
+  collection: name => ({
+    add: async data => {
+      const j = await apiFetch(BASE+"/"+name+".json", "POST", data);
+      return {id: j.name};
+    },
+    doc: id => id ? mkRef(name+"/"+id) : mkNewRef(name),
+  }),
+};
+
+/* ---------- Seed data (runs once if DB is empty) ---------- */
+const SEED_KIDS = [
+  {id:"enfant1", name:"Mollie", big:13, small:0, color:0, order:1},
+  {id:"enfant2", name:"Maé", big:0, small:0, color:1, order:2},
+];
+const SEED_ROUTINES = [
+  {id:"c01", label:"Nuit : on se couche et on reste dans le lit (droit : pipi)", b:1, s:0, rep:false, order:1},
+  {id:"c02", label:"Sages ensemble, jouent ensemble", b:1, s:0, rep:false, order:2},
+  {id:"c03", label:"S'habiller tout seul / mettre tout seul pyjama + habits", b:1, s:0, rep:false, order:3},
+  {id:"c04", label:"Se laver, s'essuyer", b:1, s:0, rep:false, order:4},
+  {id:"c05", label:"Se réveiller direct le matin pour aller au centre", b:0, s:3, rep:false, order:5},
+  {id:"c06", label:"WC : lavage mains, essuyer + tirer la chasse", b:0, s:5, rep:true, order:6},
+  {id:"c07", label:"Mettre la table ensemble sans problème", b:1, s:0, rep:true, order:7},
+  {id:"c08", label:"M'aider à ranger, à travailler : 1 tâche", b:0, s:2, rep:true, order:8},
+  {id:"c09", label:"M'aider à ranger, à travailler : 10 min", b:1, s:0, rep:true, order:9},
+  {id:"c10", label:"Demande d'1 adulte (ex : aller se laver les mains, 1 fois)", b:0, s:2, rep:true, order:10},
+  {id:"c11", label:"Repas : rester à table + manger + demander à sortir de table", b:1, s:0, rep:true, order:11},
+];
+
+async function seedIfEmpty(){
+  const existing = await apiFetch(BASE + "/kids.json", "GET");
+  if (existing) return;
+  await Promise.all([
+    ...SEED_KIDS.map(({id, ...d}) => apiFetch(BASE+"/kids/"+id+".json", "PUT", d)),
+    ...SEED_ROUTINES.map(({id, ...d}) => apiFetch(BASE+"/routines/"+id+".json", "PUT", d)),
+  ]);
+}
+
+/* ---------- Helpers ---------- */
+function fmt(sec){ const m = Math.floor(sec/60), s = sec%60; if (!m) return s + " s"; return s ? `${m} min ${s} s` : `${m} min`; }
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function colorOf(k){ return `var(${COLORS[(k.color ?? 0) % COLORS.length]})`; }
+function kidById(id){ return kids.find(k => k.id === id); }
+function dayKey(offset){ const d = new Date(); d.setDate(d.getDate() - offset); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+function rewardOf(r){ if (r.s != null || r.b != null) return {s: r.s|0, b: r.b|0}; return r.size === "b" ? {s:0, b:1} : {s:1, b:0}; }
+function entryReward(l){ if (l.gs != null || l.gb != null) return {s: l.gs|0, b: l.gb|0}; return l.size === "b" ? {s:0, b:1} : {s:1, b:0}; }
+function rewardText(w){ const p = []; if (w.b) p.push(w.b + " gros"); if (w.s) p.push(w.s + (w.s > 1 ? " petits" : " petit")); return p.join(" + ") || "0"; }
+function rewardSecs(w){ return w.s*SMALL_S + w.b*BIG_S; }
+const units = c => (c.big|0)*PER_BIG + (c.small|0);
+const fromUnits = u => ({small: u % PER_BIG, big: Math.floor(u / PER_BIG)});
+
+/* ---------- Tabs ---------- */
+function showTab(t){
+  document.querySelectorAll(".panel").forEach(p => p.hidden = p.dataset.tab !== t);
+  document.querySelectorAll(".nav-btn").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t ? "true" : "false"));
+}
+$("tabbar").addEventListener("click", e => {
+  const b = e.target.closest(".nav-btn"); if (!b) return;
+  showTab(b.dataset.tab);
+});
+
+/* ---------- Kids ---------- */
+let lastCounts = {};
+function renderKids(){
+  const box = $("kids");
+  if (!kids.length){
+    box.innerHTML = `<div class="notice">Pas encore d'enfant. Ajoute le premier pour commencer à compter ses pompons.</div>
+      <button class="add" id="addKid" type="button">+ Ajouter un enfant</button>`;
+    $("addKid").onclick = addKid; return;
+  }
+  box.innerHTML = kids.map(k => {
+    const small = k.small|0, big = k.big|0, total = small*SMALL_S + big*BIG_S;
+    const prev = lastCounts[k.id] || {small, big};
+    const shownBig = Math.min(big, 8);
+    const bigs = big ? Array.from({length: shownBig}, (_, i) => `<span class="pom lg ${i >= prev.big ? "pop":""}"></span>`).join("") + (big > 8 ? `<span class="more">+${big-8}</span>` : "")
+                     : `<span class="none">Pas encore de gros pompon</span>`;
+    const slots = Array.from({length: PER_BIG}, (_, i) => `<span class="slot ${i < small ? "pom":""} ${i < small && (i >= prev.small || big > prev.big) ? "pop":""}"></span>`).join("");
+    const nameHtml = editing === k.id
+      ? `<input class="name-input" id="nm-${k.id}" value="${esc(k.name)}" maxlength="24" aria-label="Prénom">`
+      : `<button class="name" data-rename="${k.id}" type="button" title="Modifier le prénom">${esc(k.name || "Sans nom")}</button>`;
+    const dis = busy.has(k.id) ? "disabled" : "";
+    return `<article class="kid" style="--c:${colorOf(k)}">
+      <div class="kid-hero">
+        <div class="kid-top">${nameHtml}
+          <div class="avail"><small>Temps dispo</small><div class="big-time">${total ? fmt(total) : "0 s"}</div></div>
+        </div>
+        <div class="jar">
+          <div class="row-label"><span>Gros pompons · ${big}</span></div>
+          <div class="bigs">${bigs}</div>
+          <div class="row-label"><span>Petits pompons · ${small}/${PER_BIG}</span><span>${PER_BIG-small} avant un gros</span></div>
+          <div class="slots">${slots}</div>
+        </div>
+      </div>
+      <div class="kid-body">
+        <div class="actions">
+          <button class="btn add-s" data-act="earnS" data-kid="${k.id}" type="button" ${dis}>+1 petit</button>
+          <button class="btn add-b" data-act="earnB" data-kid="${k.id}" type="button" ${dis}>+1 gros</button>
+          <button class="btn use" data-act="small" data-kid="${k.id}" type="button" ${dis || (!small && !big ? "disabled":"")}>Utiliser un petit<span>30 secondes</span></button>
+          <button class="btn use" data-act="big" data-kid="${k.id}" type="button" ${dis || (!big ? "disabled":"")}>Utiliser un gros<span>5 minutes</span></button>
+        </div>
+      </div>
+    </article>`;
+  }).join("") + (kids.length < 4 ? `<button class="add" id="addKid" type="button">+ Ajouter un enfant</button>` : "");
+  kids.forEach(k => lastCounts[k.id] = {small: k.small|0, big: k.big|0});
+  const add = $("addKid"); if (add) add.onclick = addKid;
+  if (editing){
+    const inp = $("nm-" + editing);
+    if (inp){ inp.focus(); inp.select();
+      const done = async save => { const id = editing; editing = null;
+        const v = inp.value.trim(); renderAll();
+        if (save && v && v !== kidById(id)?.name) { try { await db.doc("kids/"+id).update({name: v}); } catch(e){ showErr(e); } } };
+      inp.onkeydown = e => { if (e.key === "Enter") done(true); if (e.key === "Escape") done(false); };
+      inp.onblur = () => editing && done(true);
+    }
+  }
+}
+
+$("kids").addEventListener("click", e => {
+  const r = e.target.closest("[data-rename]");
+  if (r){ editing = r.dataset.rename; renderKids(); return; }
+  const b = e.target.closest("[data-act]");
+  if (!b || b.disabled) return;
+  const a = b.dataset.act;
+  if (a === "earnS") act(b.dataset.kid, "earn", {w: {s:1, b:0}});
+  else if (a === "earnB") act(b.dataset.kid, "earn", {w: {s:0, b:1}});
+  else act(b.dataset.kid, a);
+});
+
+async function addKid(){
+  const used = new Set(kids.map(k => k.color));
+  const color = [0,1,2,3].find(c => !used.has(c)) ?? kids.length;
+  try { await db.collection("kids").add({name: "Enfant " + (kids.length+1), small: 0, big: 0, color, order: Date.now()}); }
+  catch(e){ showErr(e); }
+}
+
+/* ---------- Actions ---------- */
+async function act(id, kind, extra){
+  const k = kidById(id); if (!k || busy.has(id)) return;
+  const before = {small: k.small|0, big: k.big|0};
+  let next = before, entry = {kid: id, at: Date.now(), by: currentUser}, msg = "", secs = 0;
+  if (kind === "earn"){
+    const w = extra.w;
+    next = fromUnits(units(before) + w.s + w.b*PER_BIG);
+    entry.t = "earn"; entry.gs = w.s; entry.gb = w.b;
+    if (next.big > before.big + w.b) entry.conv = true;
+    if (extra.id){ entry.routine = extra.id; entry.label = extra.label; entry.day = extra.day; }
+    msg = `+${rewardText(w)} pour ${k.name}` + (entry.conv ? " · 10 petits = 1 gros !" : "");
+  } else if (kind === "small"){
+    if (!units(before)) return;
+    if (!before.small) entry.broke = true;
+    next = fromUnits(units(before) - 1); entry.t = "small"; secs = SMALL_S;
+    msg = entry.broke ? `Un gros cassé en 10 petits, 1 utilisé (30 s)` : `${k.name} utilise 30 s`;
+  } else if (kind === "big"){
+    if (before.big < 1) return;
+    next = {small: before.small, big: before.big - 1}; entry.t = "big"; secs = BIG_S; msg = `${k.name} utilise 5 min`;
+  }
+  busy.add(id); renderAll();
+  try {
+    await db.doc("kids/"+id).update(next);
+    const logRef = db.collection("log").doc();
+    await logRef.set(entry);
+    toast(msg, async () => {
+      busy.add(id); renderAll();
+      try { await db.doc("kids/"+id).update(before); await logRef.delete(); hideTimer(); }
+      catch(e){ showErr(e); }
+      finally { busy.delete(id); renderAll(); }
+    });
+    if (secs) startTimer(k, secs);
+  } catch(e){ showErr(e); }
+  finally { busy.delete(id); renderAll(); }
+}
+
+async function uncheck(entryRow){
+  const k = kidById(entryRow.kid); if (!k || busy.has(k.id)) return;
+  busy.add(k.id); renderAll();
+  try {
+    const w = entryReward(entryRow);
+    await db.doc("kids/"+k.id).update(fromUnits(Math.max(0, units(k) - w.s - w.b*PER_BIG)));
+    await db.doc("log/"+entryRow.id).delete();
+    toast(`${entryRow.label || "Routine"} : −${rewardText(w)} pour ${k.name}`);
+  } catch(e){ showErr(e); }
+  finally { busy.delete(k.id); renderAll(); }
+}
+
+/* ---------- Routines ---------- */
+function renderRoutines(){
+  const box = $("routines");
+  if (!routines.length){ box.innerHTML = `<div class="empty">Pas encore de routine. Ouvre « Modifier les routines » pour en ajouter.</div>`; return; }
+  if (!kids.length){ box.innerHTML = `<div class="empty">Ajoute un enfant pour cocher ses routines.</div>`; return; }
+  const day = dayKey(dayOffset);
+  const done = new Map();
+  log.forEach(l => { if (l.t === "earn" && l.routine && l.day === day){ const key = l.kid + "|" + l.routine; if (!done.has(key)) done.set(key, []); done.get(key).push(l); } });
+  const cols = `minmax(0,1fr) repeat(${kids.length}, 56px)`;
+  let html = `<div class="rgrid" style="grid-template-columns:${cols}"><div class="eyebrow">${dayOffset ? "Hier" : "Aujourd'hui"}</div>` +
+    kids.map(k => `<div class="rh" style="--c:${colorOf(k)}">${esc(k.name)}</div>`).join("");
+  routines.forEach((r, i) => {
+    const last = i === routines.length - 1 ? "last" : "";
+    html += `<div class="rl ${last}"><span class="lbl">${esc(r.label)}</span><span class="tag">${rewardText(rewardOf(r))}${r.rep ? " · à chaque fois" : ""}</span></div>`;
+    kids.forEach(k => {
+      const es = done.get(k.id + "|" + r.id) || [];
+      const n = es.length;
+      const dis = busy.has(k.id) ? "disabled" : "";
+      if (r.rep){
+        html += `<div class="cell ${last}" style="--c:${colorOf(k)}"><div class="cw">
+          <button class="chk rep ${n ? "on cnt":""}" type="button" data-r="${r.id}" data-k="${k.id}" ${dis} aria-label="${esc(r.label)} pour ${esc(k.name)}, ${n} fois">${n || "+"}</button>
+          ${n ? `<button class="minus" type="button" data-minus="${r.id}" data-k="${k.id}" ${dis} aria-label="Retirer une fois">−1</button>` : ""}</div></div>`;
+      } else {
+        html += `<div class="cell ${last}" style="--c:${colorOf(k)}"><button class="chk ${n ? "on":""}" type="button" data-r="${r.id}" data-k="${k.id}" ${dis}
+          aria-pressed="${n ? "true":"false"}" aria-label="${esc(r.label)} pour ${esc(k.name)}"></button></div>`;
+      }
+    });
+  });
+  box.innerHTML = html + "</div>";
+}
+$("routines").addEventListener("click", e => {
+  const day = dayKey(dayOffset);
+  const m = e.target.closest("[data-minus]");
+  if (m){ if (m.disabled) return;
+    const latest = log.find(l => l.t === "earn" && l.routine === m.dataset.minus && l.kid === m.dataset.k && l.day === day);
+    if (latest) uncheck(latest); return; }
+  const b = e.target.closest(".chk"); if (!b || b.disabled) return;
+  const r = routines.find(x => x.id === b.dataset.r); if (!r) return;
+  if (!r.rep){
+    const existing = log.find(l => l.t === "earn" && l.routine === r.id && l.kid === b.dataset.k && l.day === day);
+    if (existing){ uncheck(existing); return; }
+  }
+  act(b.dataset.k, "earn", {w: rewardOf(r), id: r.id, label: r.label, day});
+});
+$("daySeg").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  dayOffset = +b.dataset.day;
+  $("daySeg").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  renderRoutines();
+});
+
+let editRoutine = null;
+function renderManage(){
+  if ($("manage").hidden) return;
+  $("manageList").innerHTML = `<div class="manage">` + (routines.map(r => `
+    <div class="mrow"><div class="lbl">${esc(r.label)}<small>${rewardText(rewardOf(r))} · ${r.rep ? "plusieurs fois par jour" : "1 fois par jour"}</small></div>
+      <button class="mini" type="button" data-edit="${r.id}">Modifier</button>
+      <button class="mini del ${confirmDel === r.id ? "sure":""}" type="button" data-del="${r.id}">${confirmDel === r.id ? "Confirmer" : "Supprimer"}</button>
+    </div>`).join("") || `<div class="empty">Aucune routine pour l'instant.</div>`) + `</div>`;
+}
+function resetForm(){
+  editRoutine = null; $("newLabel").value = ""; $("newS").value = 1; $("newB").value = 0; $("newRep").checked = false;
+  $("formGo").textContent = "Ajouter"; $("formCancel").hidden = true;
+}
+$("formCancel").onclick = resetForm;
+$("addForm").onsubmit = async e => {
+  e.preventDefault();
+  const label = $("newLabel").value.trim(); if (!label){ $("newLabel").focus(); return; }
+  const s = Math.max(0, Math.min(20, parseInt($("newS").value, 10) || 0));
+  const b = Math.max(0, Math.min(10, parseInt($("newB").value, 10) || 0));
+  if (!s && !b){ toast("Mets au moins 1 petit ou 1 gros pompon."); return; }
+  const data = {label, s, b, rep: $("newRep").checked};
+  const id = editRoutine; resetForm();
+  try { if (id) await db.doc("routines/"+id).update(data); else await db.collection("routines").add({...data, order: Date.now()}); }
+  catch(err){ showErr(err); }
+};
+$("manage").addEventListener("click", async e => {
+  const ed = e.target.closest("[data-edit]");
+  if (ed){ const r = routines.find(x => x.id === ed.dataset.edit); if (!r) return;
+    const w = rewardOf(r); editRoutine = r.id;
+    $("newLabel").value = r.label; $("newS").value = w.s; $("newB").value = w.b; $("newRep").checked = !!r.rep;
+    $("formGo").textContent = "Enregistrer"; $("formCancel").hidden = false;
+    $("addForm").scrollIntoView({block: "center", behavior: "smooth"}); $("newLabel").focus({preventScroll: true}); return; }
+  const d = e.target.closest("[data-del]");
+  if (d){
+    if (confirmDel !== d.dataset.del){ confirmDel = d.dataset.del; renderManage(); return; }
+    confirmDel = null;
+    try { await db.doc("routines/"+d.dataset.del).delete(); } catch(err){ showErr(err); }
+  }
+});
+$("toggleManage").onclick = () => {
+  const m = $("manage"); m.hidden = !m.hidden; confirmDel = null; resetForm();
+  $("toggleManage").textContent = m.hidden ? "Modifier les routines" : "Fermer";
+  renderManage();
+};
+
+/* ---------- Toast ---------- */
+let toastT = null;
+function toast(msg, undo){
+  $("toastMsg").textContent = msg;
+  const u = $("toastUndo"); u.hidden = !undo;
+  u.onclick = () => { $("toast").hidden = true; undo && undo(); };
+  $("toast").hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => $("toast").hidden = true, 6000);
+}
+function showErr(e){
+  console.error(e);
+  toast("La modification n'est pas passée. Vérifie ta connexion et réessaie.");
+}
+function showNotice(t){ const n = $("notice"); n.textContent = t; n.hidden = false; }
+
+/* ---------- Timer ---------- */
+let tInt = null, tEnd = 0, audio = null;
+function startTimer(k, secs){
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+  const el = $("timer"); el.style.setProperty("--c", colorOf(k)); el.classList.remove("done");
+  $("timerWho").textContent = `${k.name} · ${secs === BIG_S ? "gros pompon" : "petit pompon"}`;
+  $("timerStop").textContent = "Arrêter";
+  tEnd = Date.now() + secs*1000; el.hidden = false; tick();
+  clearInterval(tInt); tInt = setInterval(tick, 250);
+}
+function tick(){
+  const left = Math.max(0, Math.ceil((tEnd - Date.now())/1000));
+  $("timerNum").textContent = `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`;
+  if (!left){ clearInterval(tInt); $("timer").classList.add("done"); $("timerStop").textContent = "C'est fini !"; beep(); }
+}
+function beep(){
+  if (!audio) return;
+  try { [0, .35, .7].forEach(d => { const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.value = 880; o.connect(g); g.connect(audio.destination);
+    g.gain.setValueAtTime(.25, audio.currentTime + d); g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + d + .3);
+    o.start(audio.currentTime + d); o.stop(audio.currentTime + d + .3); }); } catch(e){}
+}
+function hideTimer(){ clearInterval(tInt); $("timer").hidden = true; }
+$("timerStop").onclick = hideTimer;
+
+/* ---------- Week + history ---------- */
+function weekStart(){ const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return d.getTime(); }
+function renderWeek(){
+  if (!kids.length) return;
+  const ws = weekStart();
+  $("week").innerHTML = kids.map(k => {
+    const mine = log.filter(l => l.kid === k.id && l.at >= ws);
+    const earned = mine.reduce((s, l) => s + (l.t === "earn" ? rewardSecs(entryReward(l)) : 0), 0);
+    const used = mine.reduce((s, l) => s + (l.t === "small" ? SMALL_S : l.t === "big" ? BIG_S : 0), 0);
+    return `<div class="wk" style="--c:${colorOf(k)}"><div class="n"><span class="dot"></span>${esc(k.name)}</div>
+      <div class="v">${earned ? fmt(earned) : "0"}<small>gagné</small></div><div class="v">${used ? fmt(used) : "0"}<small>utilisé</small></div></div>`;
+  }).join("");
+}
+function when(ts){
+  const d = new Date(ts), now = new Date();
+  const hm = d.toLocaleTimeString("fr-FR", {hour: "2-digit", minute: "2-digit"});
+  if (d.toDateString() === now.toDateString()) return hm;
+  const y = new Date(now); y.setDate(y.getDate()-1);
+  if (d.toDateString() === y.toDateString()) return "Hier " + hm;
+  return d.toLocaleDateString("fr-FR", {weekday: "short", day: "numeric", month: "short"}) + " " + hm;
+}
+function renderHist(){
+  const rows = log.slice(0, 60);
+  if (!rows.length){ $("hist").innerHTML = `<div class="empty">Aucun pompon pour l'instant.</div>`; return; }
+  $("hist").innerHTML = rows.map(r => {
+    const k = kidById(r.kid) || {name: "?", color: 0};
+    const by = r.by || "";
+    let label, icon, out = false;
+    if (r.t === "earn"){
+      label = (r.label ? r.label + " · " : "") + "+" + rewardText(entryReward(r)) + (r.conv ? " (10 petits = 1 gros)" : "");
+      if (r.day && r.day !== dayKey(0) && r.day === dayKey(1)) label += " · pour hier";
+      icon = "+";
+    }
+    else if (r.t === "small"){ label = r.broke ? "A utilisé 30 s (gros cassé)" : "A utilisé 30 s"; icon = "30"; out = true; }
+    else { label = "A utilisé 5 min"; icon = "5"; out = true; }
+    return `<div class="h" style="--c:${colorOf(k)}"><span class="ic ${out ? "out":""}">${icon}</span>
+      <div class="t"><b>${esc(k.name)}</b><small>${esc(label)}${by ? " · par " + esc(by) : ""}</small></div>
+      <div class="when">${when(r.at)}</div></div>`;
+  }).join("");
+}
+
+function renderAll(){ if (!editing) renderKids(); renderRoutines(); renderManage(); renderWeek(); renderHist(); }
+
+/* ---------- Polling ---------- */
+// shortcut: polling every 3s instead of real-time SSE; 3s delay for cross-device sync
+let pollInterval = null;
+async function poll(){
+  try {
+    const [kSnap, rSnap, lSnap] = await Promise.all([
+      apiFetch(BASE + "/kids.json", "GET"),
+      apiFetch(BASE + "/routines.json", "GET"),
+      apiFetch(BASE + "/log.json", "GET"),
+    ]);
+    kids = kSnap ? Object.entries(kSnap).map(([id,v])=>({id,...v})).sort((a,b)=>a.order-b.order) : [];
+    routines = rSnap ? Object.entries(rSnap).map(([id,v])=>({id,...v})).sort((a,b)=>a.order-b.order) : [];
+    log = lSnap ? Object.entries(lSnap).map(([id,v])=>({id,...v})).sort((a,b)=>b.at-a.at) : [];
+    renderAll();
+    const s = $("sync"); s.classList.add("on"); s.querySelector("span").textContent = currentUser ? "Sync · " + currentUser : "Synchronisé";
+  } catch(e){
+    const s = $("sync"); s.classList.remove("on"); s.querySelector("span").textContent = "Hors ligne";
+  }
+}
+
+async function boot(){
+  try { await seedIfEmpty(); } catch(e){ console.warn("Seed skipped:", e.message); }
+  await poll();
+  clearInterval(pollInterval);
+  pollInterval = setInterval(poll, 3000);
+}
+
+/* ---------- Login ---------- */
+$("sync").addEventListener("click", () => {
+  sessionStorage.removeItem("pompons_user");
+  clearInterval(pollInterval);
+  currentUser = null;
+  kids = []; log = []; routines = [];
+  $("loginPin").hidden = false; $("loginName").hidden = true;
+  $("pinInput").value = ""; $("pinErr").hidden = true;
+  $("login").hidden = false;
+  setTimeout(() => $("pinInput").focus(), 50);
+});
+
+$("pinGo").onclick = () => {
+  if ($("pinInput").value === PIN){
+    $("loginPin").hidden = true; $("loginName").hidden = false;
+  } else {
+    $("pinErr").hidden = false;
+    $("pinInput").value = ""; $("pinInput").focus();
+  }
+};
+$("pinInput").addEventListener("keydown", e => { if (e.key === "Enter") $("pinGo").click(); });
+
+$("loginName").addEventListener("click", e => {
+  const b = e.target.closest("[data-name]"); if (!b) return;
+  currentUser = b.dataset.name;
+  sessionStorage.setItem("pompons_user", currentUser);
+  $("login").hidden = true;
+  boot();
+});
+
+const stored = sessionStorage.getItem("pompons_user");
+if (stored){
+  currentUser = stored; $("login").hidden = true; boot();
+} else {
+  setTimeout(() => $("pinInput").focus(), 100);
+}
+</script>
+</body>
+</html>
